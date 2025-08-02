@@ -1,21 +1,27 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: product_db
+      POSTGRES_USER: /run/secrets/typeorm_username
+      POSTGRES_PASSWORD: /run/secrets/typeorm_password
+      POSTGRES_DB: /run/secrets/typeorm_database
+    secrets:
+      - typeorm_password
+      - typeorm_username
+      - typeorm_database
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_production:/var/lib/postgresql/data
     networks:
       - app-net
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres -d product_db']
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U /run/secrets/typeorm_username -d /run/secrets/typeorm_database',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,21 +32,55 @@ services:
       restart_policy:
         condition: on-failure
 
-  api:
-    image: samuel/products-api:latest
+  migrations:
+    image: samg1008/products-workflow-api:latest
+    command: sh -c "./wait-for-postgres.sh postgres 5432 60 && npx typeorm migration:run -d dist/data-source.js"
     environment:
-      - NODE_ENV=production
-      - TYPEORM_CONNECTION=postgres
-      - TYPEORM_HOST=postgres
-      - TYPEORM_PORT=5432
-      - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=postgres
-      - TYPEORM_DATABASE=product_db
-      - TYPEORM_ENTITIES=dist/src/products/entities/*.js
-      - TYPEORM_MIGRATIONS=dist/migrations/*.js
-      - TYPEORM_MIGRATIONS_TABLE_NAME=custom_migration_table
-      - TYPEORM_RUN_MIGRATIONS=true
-      - TYPEORM_SYNCHRONIZE=false
+      NODE_ENV: production
+      TYPEORM_CONNECTION: postgres
+      TYPEORM_HOST: postgres
+      TYPEORM_PORT: 5432
+      TYPEORM_USERNAME: /run/secrets/typeorm_username
+      TYPEORM_PASSWORD: /run/secrets/typeorm_password
+      TYPEORM_DATABASE: /run/secrets/typeorm_database
+      TYPEORM_MIGRATIONS: dist/migrations/*.js
+      TYPEORM_ENTITIES: dist/**/*.entity.js
+    secrets:
+      - typeorm_username
+      - typeorm_password
+      - typeorm_database
+    networks:
+      - app-net
+    depends_on:
+      - postgres
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: none
+      placement:
+        constraints: [node.role == manager]
+
+  api:
+    image: samg1008/products-workflow-api:latest
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      TYPEORM_CONNECTION: postgres
+      TYPEORM_HOST: postgres
+      TYPEORM_PORT: 5432
+      TYPEORM_RUN_MIGRATIONS: 'true' # Activer les migrations en production
+      TYPEORM_SYNCHRONIZE: 'false'
+      TYPEORM_ENTITIES: dist/**/*.entity.js
+      TYPEORM_MIGRATIONS: dist/migrations/*.js
+      TYPEORM_MIGRATIONS_TABLE_NAME: custom_migration_table
+      TYPEORM_USERNAME: /run/secrets/typeorm_username
+      TYPEORM_PASSWORD: /run/secrets/typeorm_password
+      TYPEORM_DATABASE: /run/secrets/typeorm_database
+      TYPEORM_LOGGING: 'true'
+    secrets:
+      - typeorm_username
+      - typeorm_password
+      - typeorm_database
     ports:
       - '8080:8080'
     networks:
@@ -53,8 +93,16 @@ services:
         limits:
           memory: 512M
 
+secrets:
+  typeorm_username:
+    external: true
+  typeorm_password:
+    external: true
+  typeorm_database:
+    external: true
+
 volumes:
-  pgdata:
+  pgdata_production:
 
 networks:
   app-net:

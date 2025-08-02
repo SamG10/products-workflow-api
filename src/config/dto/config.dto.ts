@@ -1,5 +1,11 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import * as BASE_CONFIG from '../default-config';
 
 export class EnvironmentVariablesDto {
@@ -53,4 +59,8 @@ export class EnvironmentVariablesDto {
   @IsString()
   @IsNotEmpty()
   TYPEORM_USERNAME: string;
+
+  @IsOptional()
+  @IsString()
+  TYPEORM_LOGGING: string;
 }

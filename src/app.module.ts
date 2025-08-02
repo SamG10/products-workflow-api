@@ -12,7 +12,9 @@ import { ProductsModule } from './products/products.module';
     ConfigModule.forRoot({
       isGlobal: true,
       validate,
-      envFilePath: '.env.local',
+      envFilePath:
+        process.env.NODE_ENV === 'development' ? '.env.local' : undefined,
+      ignoreEnvFile: process.env.NODE_ENV !== 'development',
     }),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     ProductsModule,

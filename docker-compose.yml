@@ -18,7 +18,7 @@ services:
       retries: 5
 
   # api:
-  #   image: samuel/products-api:latest
+  #   image: samg1008/products-workflow-api
   #   container_name: products-api
   #   environment:
   #     - NODE_ENV=production
