@@ -13,7 +13,7 @@ export class InitProducts1754080125864 implements MigrationInterface {
                 "name" character varying(100) NOT NULL,
                 "description" character varying(500),
                 "price" numeric NOT NULL,
-                "stock" integer NOT NULL,
+                "inStock" boolean NOT NULL,
                 CONSTRAINT "PK_products_id" PRIMARY KEY ("id")
             )
         `);

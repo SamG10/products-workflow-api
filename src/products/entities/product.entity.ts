@@ -1,19 +1,16 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('products')
+@Entity('product')
 export class Product {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 100 })
+  @Column()
   name: string;
-
-  @Column({ length: 500, nullable: true })
-  description?: string;
 
   @Column('decimal')
   price: number;
 
-  @Column('int')
-  stock: number;
+  @Column()
+  inStock: boolean;
 }

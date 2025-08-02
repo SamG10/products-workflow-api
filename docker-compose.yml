@@ -1,8 +1,7 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres
+    container_name: products-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
@@ -12,51 +11,34 @@ services:
       - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
-    networks:
-      - app-net
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d product_db']
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      replicas: 1
-      placement:
-        constraints: [node.role == manager]
-      restart_policy:
-        condition: on-failure
 
-  api:
-    image: samuel/products-api:latest
-    environment:
-      - NODE_ENV=production
-      - TYPEORM_CONNECTION=postgres
-      - TYPEORM_HOST=postgres
-      - TYPEORM_PORT=5432
-      - TYPEORM_USERNAME=postgres
-      - TYPEORM_PASSWORD=postgres
-      - TYPEORM_DATABASE=product_db
-      - TYPEORM_ENTITIES=dist/src/products/entities/*.js
-      - TYPEORM_MIGRATIONS=dist/migrations/*.js
-      - TYPEORM_MIGRATIONS_TABLE_NAME=custom_migration_table
-      - TYPEORM_RUN_MIGRATIONS=true
-      - TYPEORM_SYNCHRONIZE=false
-    ports:
-      - '8080:8080'
-    networks:
-      - app-net
-    deploy:
-      replicas: 2
-      restart_policy:
-        condition: on-failure
-      resources:
-        limits:
-          memory: 512M
+  # api:
+  #   image: samuel/products-api:latest
+  #   container_name: products-api
+  #   environment:
+  #     - NODE_ENV=production
+  #     - TYPEORM_CONNECTION=postgres
+  #     - TYPEORM_HOST=postgres
+  #     - TYPEORM_PORT=5432
+  #     - TYPEORM_USERNAME=postgres
+  #     - TYPEORM_PASSWORD=postgres
+  #     - TYPEORM_DATABASE=product_db
+  #     - TYPEORM_ENTITIES=dist/src/products/entities/*.js
+  #     - TYPEORM_MIGRATIONS=dist/migrations/*.js
+  #     - TYPEORM_MIGRATIONS_TABLE_NAME=custom_migration_table
+  #     - TYPEORM_RUN_MIGRATIONS=true
+  #     - TYPEORM_SYNCHRONIZE=false
+  #   ports:
+  #     - '8080:8080'
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
 
 volumes:
   pgdata:
-
-networks:
-  app-net:
-    driver: overlay
-    attachable: true

@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -22,8 +23,6 @@ export class CreateProductDto {
   @Min(0)
   price: number;
 
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  stock: number;
+  @IsBoolean()
+  inStock: boolean;
 }
