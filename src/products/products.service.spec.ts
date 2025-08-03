@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ProductsRepository } from './products.repository';
 import { ProductsService } from './products.service';
 
 describe('ProductsService', () => {
@@ -6,7 +7,13 @@ describe('ProductsService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ProductsService],
+      providers: [
+        ProductsService,
+        {
+          provide: ProductsRepository,
+          useValue: {},
+        },
+      ],
     }).compile();
 
     service = module.get<ProductsService>(ProductsService);
@@ -14,5 +21,9 @@ describe('ProductsService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 });
