@@ -1,13 +1,5 @@
 name: Run tests
-on:
-  # Run on every push to any branch
-  push:
-
-  # Run when PR targets develop or main
-  pull_request:
-    branches:
-      - develop
-      - main
+on: [push]
 jobs:
   unit-tests:
     name: Run Unit Tests
