@@ -9,7 +9,10 @@ describe('ProductsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProductsService,
-        { provide: ProductsRepository, useValue: {} },
+        {
+          provide: ProductsRepository,
+          useValue: {},
+        },
       ],
     }).compile();
 
@@ -18,5 +21,9 @@ describe('ProductsService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 });

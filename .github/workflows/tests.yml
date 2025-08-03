@@ -21,3 +21,18 @@ jobs:
 
       - name: Run unit tests
         run: npm run test
+=======
+name: Run tests
+on: [push]
+jobs:
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run test
