@@ -1,0 +1,34 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrations
+  namespace: node
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrations
+          image: samg1008/products-workflow-api:latest
+          command:
+            [
+              'sh',
+              '-c',
+              './wait-for-postgres.sh postgres.postgres.svc.cluster.local 5432 60 && npx typeorm migration:run -d dist/data-source.js',
+            ]
+          envFrom:
+            - secretRef:
+                name: typeorm-secrets
+          env:
+            - name: TYPEORM_HOST
+              value: postgres.postgres.svc.cluster.local
+            - name: TYPEORM_PORT
+              value: '5432'
+            - name: TYPEORM_CONNECTION
+              value: postgres
+            - name: NODE_ENV
+              value: production
+            - name: TYPEORM_ENTITIES
+              value: dist/**/*.entity.js
+            - name: TYPEORM_MIGRATIONS
+              value: dist/migrations/*.js
+      restartPolicy: Never
