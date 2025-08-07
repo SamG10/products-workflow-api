@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: node
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: samg1008/products-workflow-api:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: typeorm-secrets
+          env:
+            - name: TYPEORM_HOST
+              value: postgres.postgres.svc.cluster.local
+            - name: TYPEORM_PORT
+              value: '5432'
+            - name: TYPEORM_CONNECTION
+              value: postgres
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: '8080'
+            - name: TYPEORM_RUN_MIGRATIONS
+              value: 'true'
+            - name: TYPEORM_SYNCHRONIZE
+              value: 'false'
+            - name: TYPEORM_ENTITIES
+              value: dist/**/*.entity.js
+            - name: TYPEORM_MIGRATIONS
+              value: dist/migrations/*.js
+            - name: TYPEORM_MIGRATIONS_TABLE_NAME
+              value: custom_migration_table
+            - name: TYPEORM_LOGGING
+              value: 'true'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: LoadBalancer # ou NodePort en local
