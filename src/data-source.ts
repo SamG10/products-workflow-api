@@ -4,16 +4,16 @@ import { Product } from './products/entities/product.entity';
 
 // Charger .env.local seulement si on n'est pas en production
 if (process.env.NODE_ENV !== 'production') {
-  config({ path: '.env.local' });
+  config({ path: '.env' });
 }
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
-  host: process.env.PO || 'localhost',
+  host: process.env.TYPEORM_HOST || 'localhost',
   port: parseInt(process.env.TYPEORM_PORT || '5432', 10) || 5432,
-  username: process.env.TYPEORM_PASSWORD || 'postgres',
-  password: process.env.TYPEORM_USERNAME || 'postgres',
-  database: process.env.TYPEORM_DATABASE || 'product_db',
+  username: process.env.TYPEORM_USERNAME || 'postgres',
+  password: process.env.TYPEORM_PASSWORD || 'postgres',
+  database: process.env.TYPEORM_DATABASE || 'products_db',
   entities: [Product],
   migrations: [process.env.TYPEORM_MIGRATIONS || 'dist/migrations/*.js'],
   migrationsTableName: 'custom_migration_table',
