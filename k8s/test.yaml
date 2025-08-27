@@ -1,0 +1,116 @@
+# Configuration de test pour products-workflow-api
+# Utilisation: helm install products-api-test ./chart -f k8s/test.yaml
+
+global:
+  environment: test
+
+replicaCount: 1
+
+image:
+  repository: samg1008/products-workflow-api
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: NodePort
+  port: 8080
+  targetPort: 8080
+  nodePort: 30080
+
+# Configuration Node.js/API
+node:
+  env:
+    - name: NODE_ENV
+      value: 'development'
+    - name: PORT
+      value: '8080'
+    - name: TYPEORM_HOST
+      value: 'postgres-db-2-postgresql.postgres.svc.cluster.local'
+    - name: TYPEORM_PORT
+      value: '5432'
+    - name: TYPEORM_CONNECTION
+      value: 'postgres'
+    - name: TYPEORM_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: typeorm-secrets
+          key: TYPEORM_USERNAME
+    - name: TYPEORM_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: typeorm-secrets
+          key: TYPEORM_PASSWORD
+    - name: TYPEORM_DATABASE
+      valueFrom:
+        secretKeyRef:
+          name: typeorm-secrets
+          key: TYPEORM_DATABASE
+    - name: TYPEORM_SYNCHRONIZE
+      value: 'false' # IMPORTANT: Changer en 'true' pour éviter les migrations
+    - name: TYPEORM_LOGGING
+      value: 'true'
+    - name: TYPEORM_ENTITIES
+      value: 'dist/**/*.entity.js'
+    - name: TYPEORM_MIGRATIONS
+      value: 'dist/migrations/*.js'
+    - name: TYPEORM_MIGRATIONS_TABLE_NAME
+      value: 'custom_migration_table'
+
+# Désactiver l'autoscaling pour les tests
+autoscaling:
+  enabled: false
+
+# Configuration des ressources (limitées pour les tests)
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Configuration des sondes de santé (plus tolérantes)
+livenessProbe:
+  httpGet:
+    path: /v1/health
+    port: 8080
+  initialDelaySeconds: 60 # Plus de temps pour le démarrage
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 5
+
+readinessProbe:
+  httpGet:
+    path: /v1/health
+    port: 8080
+  initialDelaySeconds: 30 # Plus de temps pour le démarrage
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+migrations:
+  enabled: true
+
+# Configuration de sécurité (optionnel)
+podSecurityContext: {}
+securityContext: {}
+
+# Pas de volumes supplémentaires pour les tests
+volumes: []
+volumeMounts: []
+
+# Configuration des labels et annotations
+podLabels: {}
+podAnnotations: {}
+
+# Configuration du service account
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ''
+
+# Pas de sélecteurs de nœuds spécifiques pour les tests
+nodeSelector: {}
+tolerations: []
+affinity: {}

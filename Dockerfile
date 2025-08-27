@@ -5,10 +5,8 @@ WORKDIR /app
 
 COPY package*.json ./
 COPY tsconfig.json ./
-COPY wait-for-it.sh ./wait-for-it.sh
 COPY wait-for-postgres.sh ./wait-for-postgres.sh
 
-RUN chmod +x ./wait-for-it.sh
 RUN chmod +x ./wait-for-postgres.sh
 RUN npm install --production
 
@@ -27,10 +25,8 @@ WORKDIR /app
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/wait-for-it.sh ./wait-for-it.sh
 COPY --from=builder /app/wait-for-postgres.sh ./wait-for-postgres.sh
 
-RUN chmod +x ./wait-for-it.sh
 RUN chmod +x ./wait-for-postgres.sh
 
 EXPOSE 8080
