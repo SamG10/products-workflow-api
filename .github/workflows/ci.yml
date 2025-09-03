@@ -20,7 +20,12 @@ on:
       - develop
       - main
       - 'release/*'
-  workflow_dispatch:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - 'release/*'
+  # workflow_dispatch:
 
 jobs:
   # --- Quality Checks ---
