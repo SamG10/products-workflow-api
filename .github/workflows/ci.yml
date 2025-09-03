@@ -1,0 +1,131 @@
+name: Global CI/CD
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: true
+        type: string
+        default: '22.18.1'
+      docker-image:
+        required: true
+        type: string
+        default: 'samg1008/products-workflow-api'
+      app-name:
+        required: true
+        type: string
+        default: 'products-workflow-api'
+  push:
+    branches:
+      - develop
+      - main
+      - 'release/*'
+  workflow_dispatch:
+
+jobs:
+  # --- Quality Checks ---
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Install dependencies
+        run: npm ci
+      - name: Run vulnerability audit
+        run: npm audit --audit-level=moderate
+      - name: Run lint
+        run: npm run lint
+      - name: Run unit tests
+        run: npm run test
+
+  # --- Build & Push Docker Image ---
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: quality-check
+    if: github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/release/') || github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build & Push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ inputs.docker-image }}:${{ github.sha }}
+
+  # --- Deploy Dev ---
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_DEV }}" > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+      - name: Deploy Helm chart (Dev)
+        run: |
+          helm repo add furiousducks-charts https://github.com/furiousducks/charts
+          helm repo update
+          helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
+            --set image.repository=${{ inputs.docker-image }} \
+            --set image.tag=${{ github.sha }} \
+            --namespace=${{ inputs.app-name }} \
+            -f helm/values-dev.yaml
+
+  # --- Deploy Preprod ---
+  deploy-preprod:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/heads/release/')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_PREPROD }}" > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+      - name: Deploy Helm chart (Preprod)
+        run: |
+          helm repo add furiousducks-charts https://github.com/furiousducks/charts
+          helm repo update
+          helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
+            --set image.repository=${{ inputs.docker-image }} \
+            --set image.tag=${{ github.sha }} \
+            --namespace=${{ inputs.app-name }} \
+            -f helm/values-preprod.yaml
+
+  # --- Deploy Prod (manuel) ---
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up kubectl
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_PROD }}" > kubeconfig.yaml
+          export KUBECONFIG=kubeconfig.yaml
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+      - name: Deploy Helm chart (Prod)
+        run: |
+          helm repo add furiousducks-charts https://github.com/furiousducks/charts
+          helm repo update
+          helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
+            --set image.repository=${{ inputs.docker-image }} \
+            --set image.tag=${{ github.sha }} \
+            --namespace=${{ inputs.app-name }} \
+            -f helm/values-prod.yaml
