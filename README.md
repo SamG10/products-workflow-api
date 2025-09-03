@@ -3,7 +3,11 @@
 ## Docker
 
 ```bash
-docker build -t samg1008/products-workflow-api .
+docker build -t samg1008/products-workflow-api:latest .
+```
+
+```bash
+docker push samg1008/products-workflow-api:latest
 ```
 
 deploy stack
