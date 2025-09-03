@@ -64,7 +64,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ inputs.docker-image }}:${{ github.sha }}
+          tags: ${{ inputs.docker-image || 'samg1008/products-workflow-api' }}:${{ github.sha }}
 
   # --- Deploy Dev ---
   deploy-dev:
@@ -84,7 +84,7 @@ jobs:
           helm repo add furiousducks-charts https://github.com/furiousducks/charts
           helm repo update
           helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
-            --set image.repository=${{ inputs.docker-image }} \
+            --set image.repository=${{ inputs.docker-image || 'samg1008/products-workflow-api' }} \
             --set image.tag=${{ github.sha }} \
             --namespace=${{ inputs.app-name }} \
             -f helm/values-dev.yaml
@@ -107,7 +107,7 @@ jobs:
           helm repo add furiousducks-charts https://github.com/furiousducks/charts
           helm repo update
           helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
-            --set image.repository=${{ inputs.docker-image }} \
+            --set image.repository=${{ inputs.docker-image || 'samg1008/products-workflow-api' }} \
             --set image.tag=${{ github.sha }} \
             --namespace=${{ inputs.app-name }} \
             -f helm/values-preprod.yaml
@@ -130,7 +130,7 @@ jobs:
           helm repo add furiousducks-charts https://github.com/furiousducks/charts
           helm repo update
           helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
-            --set image.repository=${{ inputs.docker-image }} \
+            --set image.repository=${{ inputs.docker-image || 'samg1008/products-workflow-api' }} \
             --set image.tag=${{ github.sha }} \
             --namespace=${{ inputs.app-name }} \
             -f helm/values-prod.yaml
