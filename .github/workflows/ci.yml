@@ -81,7 +81,7 @@ jobs:
         uses: azure/setup-helm@v4
       - name: Deploy Helm chart (Dev)
         run: |
-          helm repo add furiousducks-charts https://github.com/furiousducks/charts
+          helm repo add furiousducks-charts https://github.com/Agence-Furious-Duck/furious-ducks-helm-charts
           helm repo update
           helm upgrade --install ${{ inputs.app-name }} furiousducks-charts/${{ inputs.app-name }} \
             --set image.repository=${{ inputs.docker-image || 'samg1008/products-workflow-api' }} \
