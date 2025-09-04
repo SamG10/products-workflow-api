@@ -82,7 +82,7 @@ jobs:
         uses: azure/setup-helm@v4
       - name: Clone Helm chart repository
         run: |
-          git clone https://${{ secrets.PRIVATE_TOKEN }}@github.com/Agence-Furious-Duck/furious-ducks-helm-charts.git /tmp/helm-charts
+          git clone https://samg1008:${{ secrets.PRIVATE_TOKEN }}@github.com/Agence-Furious-Duck/furious-ducks-helm-charts.git /tmp/helm-charts
       - name: Create namespace
         run: |
           export KUBECONFIG=$(pwd)/kubeconfig.yaml
