@@ -75,19 +75,28 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up kubectl
         run: |
-          echo "${{ secrets.KUBE_CONFIG_DEV }}" > kubeconfig.yaml
-          export KUBECONFIG=kubeconfig.yaml
+          echo "${{ secrets.KUBE_CONFIG_DEV }}" | base64 -d > kubeconfig.yaml
+          export KUBECONFIG=$(pwd)/kubeconfig.yaml
+          kubectl config current-context
       - name: Install Helm
         uses: azure/setup-helm@v4
+      - name: Clone Helm chart repository
+        run: |
+          git clone https://${{ secrets.GITHUB_TOKEN_PRIVATE }}@github.com/Agence-Furious-Duck/furious-ducks-helm-charts.git /tmp/helm-charts
+      - name: Create namespace
+        run: |
+          export KUBECONFIG=$(pwd)/kubeconfig.yaml
+          kubectl create namespace ${{ inputs.app-name || 'products-workflow-api' }} --dry-run=client -o yaml | kubectl apply -f -
       - name: Deploy Helm chart (Dev)
         run: |
-          git clone https://github.com/Agence-Furious-Duck/furious-ducks-helm-charts.git /tmp/helm-charts
-          helm upgrade --install ${{ inputs.app-name }} /tmp/helm-charts \
+          export KUBECONFIG=$(pwd)/kubeconfig.yaml
+          helm upgrade --install ${{ inputs.app-name || 'products-workflow-api' }} /tmp/helm-charts \
             --set image.repository=${{ inputs.docker-image || 'samg1008/products-workflow-api' }} \
             --set image.tag=${{ github.sha }} \
-            --namespace=${{ inputs.app-name }} \
+            --namespace=${{ inputs.app-name || 'products-workflow-api' }} \
             -f k8s/values-dev.yaml \
-            --create-namespace
+            --wait \
+            --timeout=10m
 
   # --- Deploy Preprod ---
   deploy-preprod:
